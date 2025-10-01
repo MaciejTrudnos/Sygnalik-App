@@ -8,9 +8,11 @@ import android.telephony.SmsMessage
 import android.util.Log
 
 class SmsReceiver : BroadcastReceiver() {
+
     companion object {
         lateinit var bleManager: BLEManager
     }
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action.equals("android.provider.Telephony.SMS_RECEIVED")) {
             val bundle: Bundle? = intent.extras

@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
     private var bluetoothLeScanner: BluetoothLeScanner? = null
     private lateinit var bleManager: BLEManager
     private lateinit var smsReceiver: SmsReceiver
+    private lateinit var callReceiver: CallReceiver
 
     var bleText by mutableStateOf("")
 
@@ -40,10 +41,15 @@ class MainActivity : ComponentActivity() {
             bleText = message
         })
 
+        requestPermissions(bleManager)
+
         smsReceiver = SmsReceiver()
         SmsReceiver.bleManager = bleManager
 
-        requestPermissions(bleManager)
+        callReceiver = CallReceiver()
+        CallReceiver.bleManager = bleManager
+
+
 
         setContent {
             SygnalikTheme {
