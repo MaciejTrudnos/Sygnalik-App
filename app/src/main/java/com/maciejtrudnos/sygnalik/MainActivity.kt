@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.maciejtrudnos.sygnalik.ui.theme.SygnalikTheme
 
 class MainActivity : ComponentActivity() {
+
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothLeScanner: BluetoothLeScanner? = null
     private lateinit var bleManager: BLEManager
@@ -48,8 +49,6 @@ class MainActivity : ComponentActivity() {
 
         callReceiver = CallReceiver()
         CallReceiver.bleManager = bleManager
-
-
 
         setContent {
             SygnalikTheme {

@@ -21,7 +21,7 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import java.util.UUID
 
-open class BLEManager(private val context: Context, private val bluetoothLeScanner: BluetoothLeScanner?, private val onMessage: (String) -> Unit)
+class BLEManager(private val context: Context, private val bluetoothLeScanner: BluetoothLeScanner?, private val onMessage: (String) -> Unit)
 {
     private var bluetoothGatt: BluetoothGatt? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -37,7 +37,11 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun startScan() {
-        val filter = ScanFilter.Builder().build()
+        // Filter by your service UUID to find only your ESP32
+        val filter = ScanFilter.Builder()
+            .setServiceUuid(android.os.ParcelUuid(SERVICE_UUID))
+            .build()
+
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
@@ -46,6 +50,7 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
 
         handler.postDelayed({
             bluetoothLeScanner?.stopScan(scanCallback)
+            setStatus("Skanowanie zakończone - nie znaleziono urządzenia")
         }, 30000)
     }
 
@@ -54,10 +59,20 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
             result?.device?.let { device ->
-                Log.i("BLE", "Znaleziono urządzenie: ${device.address}")
+                // Optional: Add device name check
+                val deviceName = device.name
+                Log.i("BLE", "Znaleziono urządzenie: ${device.address}, nazwa: $deviceName")
+
                 bluetoothLeScanner?.stopScan(this)
+                setStatus("Łączenie z urządzeniem...")
                 connectToDevice(device)
             }
+        }
+
+        override fun onScanFailed(error: Int) {
+            super.onScanFailed(error)
+            Log.e("BLE", "Błąd skanowania: $error")
+            setStatus("Błąd skanowania: $error")
         }
     }
 
@@ -65,7 +80,8 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        bluetoothGatt = device.connectGatt(context, true, gattCallback)
+        // Change autoConnect to false for faster, more reliable connection
+        bluetoothGatt = device.connectGatt(context, false, gattCallback)
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
@@ -73,16 +89,29 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i("BLE", "Połączono, rozpoczynam discovery...")
-                gatt.discoverServices()
+                setStatus("Połączono, wyszukiwanie serwisów...")
+                // Small delay before service discovery can help on some devices
+                handler.postDelayed({
+                    gatt.discoverServices()
+                }, 600)
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i("BLE", "Rozłączono")
+                setStatus("Rozłączono")
             }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.i("BLE", "Znaleziono ${gatt.services.size} serwisów")
+
                 val service = gatt.getService(SERVICE_UUID)
-                targetCharacteristic = service?.getCharacteristic(CHARACTERISTIC_UUID)
+                if (service == null) {
+                    Log.e("BLE", "Nie znaleziono serwisu o UUID: $SERVICE_UUID")
+                    setStatus("Brak serwisu")
+                    return
+                }
+
+                targetCharacteristic = service.getCharacteristic(CHARACTERISTIC_UUID)
                 if (targetCharacteristic == null) {
                     val message = "Brak charakterystyki"
                     Log.e("BLE", message)
@@ -92,6 +121,9 @@ open class BLEManager(private val context: Context, private val bluetoothLeScann
                     Log.i("BLE", message)
                     setStatus(message)
                 }
+            } else {
+                Log.e("BLE", "Service discovery failed: $status")
+                setStatus("Błąd discovery: $status")
             }
         }
     }
