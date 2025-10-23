@@ -22,12 +22,10 @@ class SmsReceiver : BroadcastReceiver() {
                     for (pdu in pdus) {
                         val format = bundle.getString("format")
                         val sms = SmsMessage.createFromPdu(pdu as ByteArray, format)
-                        //val messageBody = sms.messageBody
                         val sender = sms.displayOriginatingAddress
 
                         Log.i("SMS", "Wiadomosc od $sender")
-
-                        bleManager.sendText("Wiadomosc od $sender")
+                        bleManager.sendText("sms")
                     }
                 }
             } catch (e: Exception) {

@@ -18,7 +18,7 @@ class CallReceiver : BroadcastReceiver() {
 
             if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
                 Log.i("CALL", "Polaczenie przychodzace")
-                bleManager.sendText("Polaczenie przychodzace")
+                bleManager.sendText("call")
             }
         }
     }

@@ -50,7 +50,6 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
 
         handler.postDelayed({
             bluetoothLeScanner?.stopScan(scanCallback)
-            setStatus("Skanowanie zakończone - nie znaleziono urządzenia")
         }, 30000)
     }
 
