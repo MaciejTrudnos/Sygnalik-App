@@ -12,7 +12,9 @@ import android.content.Intent
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.location.LocationCallback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -22,6 +24,9 @@ class ForegroundService : Service() {
     private lateinit var smsReceiver: SmsReceiver
     private lateinit var callReceiver: CallReceiver
     private lateinit var bluetoothAdapter: BluetoothAdapter
+
+    private lateinit var locationProvider: LocationProvider
+    private lateinit var locationCallback: LocationCallback
 
     private var bluetoothLeScanner: BluetoothLeScanner? = null
     private val binder = LocalBinder()
@@ -72,6 +77,12 @@ class ForegroundService : Service() {
 
         callReceiver = CallReceiver()
         CallReceiver.bleManager = bleManager
+
+        locationProvider = LocationProvider(this)
+
+        locationCallback = locationProvider.startContinuousLocationUpdates(5000L) { lat, lon ->
+            Log.d("LOCATION", "Lat: $lat, Lon: $lon")
+        }
 
         return START_STICKY
     }
