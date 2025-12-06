@@ -15,6 +15,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.LocationCallback
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -78,13 +80,34 @@ class ForegroundService : Service() {
         callReceiver = CallReceiver()
         CallReceiver.bleManager = bleManager
 
+        val speedCameras = getSpeedCameras();
+
         locationProvider = LocationProvider(this)
 
         locationCallback = locationProvider.startContinuousLocationUpdates(5000L) { lat, lon ->
-            Log.d("LOCATION", "Lat: $lat, Lon: $lon")
+            speedCameras.forEach { cam ->
+                val distance = locationProvider.distanceInMeters(lat, lon, cam.lat,cam.lon )
+                Log.d("LOCATION DISTANCE", "Distance: $distance")
+
+                if (distance <= 200) {
+                    bleManager.sendText("speedcamera")
+                }
+            }
         }
 
         return START_STICKY
+    }
+
+    fun getSpeedCameras() : List<SpeedCamera>  {
+        val inputStream = resources.openRawResource(R.raw.speed_cameras_poland_20251203)
+        val json = inputStream.bufferedReader().use { it.readText() }
+
+        val gson = Gson()
+        val listType = object : TypeToken<List<SpeedCamera>>() {}.type
+
+        val speedCameras: List<SpeedCamera> = gson.fromJson(json, listType)
+
+        return speedCameras;
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
