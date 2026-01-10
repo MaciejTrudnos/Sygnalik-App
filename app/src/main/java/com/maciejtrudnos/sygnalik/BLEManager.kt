@@ -88,7 +88,6 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i("BLE", "Połączono, rozpoczynam discovery...")
-                setStatus("Połączono, wyszukiwanie serwisów...")
                 // Small delay before service discovery can help on some devices
                 handler.postDelayed({
                     gatt.discoverServices()
@@ -116,7 +115,7 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
                     Log.e("BLE", message)
                     setStatus(message)
                 } else {
-                    val message = "Gotowa charakterystyka do wysyłania"
+                    val message = "Połączono"
                     Log.i("BLE", message)
                     setStatus(message)
                 }
