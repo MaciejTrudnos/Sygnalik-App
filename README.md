@@ -6,11 +6,11 @@ Sygnalik-App connects to the [Sygnalik-Device](https://github.com/MaciejTrudnos/
 It also integrates with [Traccar](https://www.traccar.org) to provide GPS route tracking.
 
 ## Features  
-- [x] **SMS notifications**  
-- [x] **Incoming call notifications**  
-- [x] **Speed camera alerts (Poland)**  
-- [x] **Traccar integration (GPS route tracking)**  
-- [ ] **Navigation support**
+- [x] **SMS alerts** – Get notified of incoming texts on your device.
+- [x] **Call alerts** – Real-time incoming call notifications.
+- [x] **Speed camera alerts** – Stay safe with localized alerts (Poland).
+- [x] **Traccar integration** – Automatic GPS route tracking.
+- [ ] **Navigation support** – (In progress) Visual [turn-by-turn](https://github.com/MaciejTrudnos/Sygnalik-Directions-API) cues.
 
 ## Configuration
 To enable Geocoding (Nominatim) and Tracking (Traccar), configure the following system environment variables:
