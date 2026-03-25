@@ -22,4 +22,4 @@ To enable Geocoding (Nominatim) and Tracking (Traccar), configure the following 
 | `TRACCAR_HOST` | The address of your Traccar instance | `http://demo3.traccar.org:5055` |
 
 ## Prerequisites
-To function correctly in the background, Sygnalik-App requires several sensitive permissions. Before the first run, please go to Settings > Apps > Sygnalik-App and grant them.
+To function correctly in the background, Sygnalik requires several sensitive permissions. Before the first run, please go to Settings > Apps > Sygnalik and grant them.
