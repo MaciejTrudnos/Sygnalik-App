@@ -17,11 +17,21 @@ import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.LocationCallback
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ForegroundService : Service() {
     lateinit var bleManager: BLEManager
+
+    private val client = OkHttpClient()
 
     private lateinit var smsReceiver: SmsReceiver
     private lateinit var callReceiver: CallReceiver
@@ -39,6 +49,9 @@ class ForegroundService : Service() {
     private val _bleText = MutableStateFlow("")
     val bleText: StateFlow<String> get() = _bleText
 
+    val traccarHost = BuildConfig.TRACCAR_HOST
+    val traccarDeviceId = BuildConfig.TRACCAR_DEVICE_ID
+
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService = this@ForegroundService
     }
@@ -54,6 +67,8 @@ class ForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
+
+        val scope = CoroutineScope(Dispatchers.IO)
 
         val notification = NotificationCompat.Builder(this, "sygnalik_channel")
             .setContentTitle("Sygnalik Running")
@@ -85,9 +100,14 @@ class ForegroundService : Service() {
         locationProvider = LocationProvider(this)
 
         locationCallback = locationProvider.startContinuousLocationUpdates(5000L) { lat, lon ->
+            Log.d("SYGNALIK-LOCATION", "lat: $lat lon: $lon")
+
+            scope.launch {
+                sendPosition(lat, lon)
+            }
+
             speedCameras.forEach { cam ->
                 val distance = locationProvider.distanceInMeters(lat, lon, cam.lat,cam.lon )
-                Log.d("LOCATION DISTANCE", "Distance: $distance")
 
                 if (distance <= 200) {
                     bleManager.sendText("speedcamera")
@@ -108,6 +128,30 @@ class ForegroundService : Service() {
         val speedCameras: List<SpeedCamera> = gson.fromJson(json, listType)
 
         return speedCameras;
+    }
+
+    suspend fun sendPosition(lat: Double, lon: Double) {
+        Log.d("SYGNALIK-TRACCAR", "traccarHost: $traccarHost traccarDeviceId: $traccarDeviceId")
+
+        val url = "${traccarHost}/?" +
+                "id=${traccarDeviceId}" +
+                "&lat=${lat}" +
+                "&lon=${lon}"
+
+        val request = Request.Builder()
+            .url(url)
+            .post(okhttp3.RequestBody.create(null, ByteArray(0)))
+            .build()
+
+        withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    println("SYGNALIK-RESPONSE: ${response.code}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder = binder

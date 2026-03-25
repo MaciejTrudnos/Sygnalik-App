@@ -1,15 +1,13 @@
 # Sygnalik-App  
-A companion smartphone application for the [Sygnalik-Device](https://github.com/MaciejTrudnos/Sygnalik-Device), enabling safe and seamless Bluetooth communication between your phone and motorcycle-mounted notification display.
-
-## Motivation  
-Mounting a smartphone on a motorcycle exposes it to vibration, weather, and distraction risks.  
-Sygnalik-App solves this by keeping your phone safely stored while still delivering crucial notifications to the Sygnalik-Device.
+A mobile application designed for the [Sygnalik-Device](https://github.com/MaciejTrudnos/Sygnalik-Device)
 
 ## Overview  
-Sygnalik-App connects to the Sygnalik-Device via Bluetooth and transmits essential notifications in real time.  
-It ensures riders stay informed of important alerts — without needing to handle or mount their phone while riding.
+Sygnalik-App connects to the [Sygnalik-Device](https://github.com/MaciejTrudnos/Sygnalik-Device) via Bluetooth and transmits notifications in real time.  
+It also integrates with [Traccar](https://www.traccar.org) to provide GPS route tracking.
 
-## Supported Notifications  
-- 📩 **SMS**  
-- 📞 **Incoming calls**  
-- 🚨 **Speed camera alerts**
+## Features  
+- [x] **SMS notifications**  
+- [x] **Incoming call notifications**  
+- [x] **Speed camera alerts (Poland)**  
+- [x] **Traccar integration (GPS route tracking)**  
+- [ ] **Navigation support**  

@@ -20,7 +20,19 @@ android {
         buildConfigField(
             "String",
             "NOMINATIM_USER_AGENT",
-            System.getenv("NOMINATIM_USER_AGENT") ?: ""
+            "\"${System.getenv("NOMINATIM_USER_AGENT") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "TRACCAR_HOST",
+            "\"${System.getenv("TRACCAR_HOST") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "TRACCAR_DEVICE_ID",
+            "\"${System.getenv("TRACCAR_DEVICE_ID") ?: ""}\""
         )
     }
 

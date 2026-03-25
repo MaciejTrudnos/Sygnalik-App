@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.maciejtrudnos.sygnalik.ui.theme.SygnalikTheme
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
