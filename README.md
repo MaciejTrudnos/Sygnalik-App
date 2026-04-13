@@ -23,3 +23,17 @@ To enable Geocoding (Nominatim) and Tracking (Traccar), configure the following 
 
 ## Prerequisites
 To function correctly in the background, Sygnalik requires several sensitive permissions. Before the first run, please go to Settings > Apps > Sygnalik and grant them.
+
+## Real Device Photos
+<table align="left">
+  <tr>
+    <td align="center">
+      <img src="https://github.com/MaciejTrudnos/Sygnalik-Device/blob/main/assets/mysuzuki.jpg" height="260"><br>
+      <sub><b>Installed in vehicle – front view</b></sub>
+    </td>
+    <td align="center">
+      <img src="https://github.com/MaciejTrudnos/Sygnalik-Device/blob/main/assets/mysuzuki-2.jpg" height="260"><br>
+      <sub><b>Installed in vehicle – side view</b></sub>
+    </td>
+  </tr>
+</table>
