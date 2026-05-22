@@ -20,6 +20,8 @@ To enable Geocoding (Nominatim) and Tracking (Traccar), configure the following 
 | `NOMINATIM_USER_AGENT` | Identifying your app to OpenStreetMap | `Sygnalik (contact@example.com)` |
 | `TRACCAR_DEVICE_ID` | Your unique ID from the Traccar panel | `2E73E605-77B6...` |
 | `TRACCAR_HOST` | The address of your Traccar instance | `http://demo3.traccar.org:5055` |
+| `WARNING_GATEWAY_HOST` | The address of the Sygnalik Warning Gateway instance | `http://sygnalik-warning-gateway:5223` |
+| `WARNING_GATEWAY_API_KEY` | API key used to authorize requests to the Sygnalik Warning Gateway | `MY_SECRET_KEY_123` |
 
 ## Prerequisites
 To function correctly in the background, Sygnalik requires several sensitive permissions. Before the first run, please go to Settings > Apps > Sygnalik and grant them.
