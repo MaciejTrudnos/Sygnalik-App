@@ -9,7 +9,7 @@ It also integrates with [Traccar](https://www.traccar.org) to provide GPS route 
 - [x] **SMS alerts** – Get notified of incoming texts on your device.
 - [x] **Call alerts** – Real-time incoming call notifications.
 - [x] **Speed camera alerts** – Stay safe with localized alerts (Poland).
-- [x] **Speed control alerts** – Warnings about nearby police speed checks controls.
+- [x] **Speed control alerts** – Warnings about nearby police speed controls.
 - [x] **Traccar integration** – Automatic GPS route tracking.
 - [ ] **Navigation support** – (In progress) Visual [turn-by-turn](https://github.com/MaciejTrudnos/Sygnalik-Directions-API) cues.
 
