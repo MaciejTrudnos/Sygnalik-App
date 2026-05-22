@@ -34,6 +34,18 @@ android {
             "TRACCAR_DEVICE_ID",
             "\"${System.getenv("TRACCAR_DEVICE_ID") ?: ""}\""
         )
+
+        buildConfigField(
+            "String",
+            "WARNING_GATEWAY_HOST",
+            "\"${System.getenv("WARNING_GATEWAY_HOST") ?: ""}\""
+        )
+
+        buildConfigField(
+            "String",
+            "WARNING_GATEWAY_API_KEY",
+            "\"${System.getenv("WARNING_GATEWAY_API_KEY") ?: ""}\""
+        )
     }
 
     buildTypes {

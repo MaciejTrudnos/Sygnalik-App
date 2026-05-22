@@ -17,16 +17,15 @@ import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.LocationCallback
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.maciejtrudnos.sygnalik.model.Warning
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 
 class ForegroundService : Service() {
     lateinit var bleManager: BLEManager
@@ -51,6 +50,9 @@ class ForegroundService : Service() {
 
     val traccarHost = BuildConfig.TRACCAR_HOST
     val traccarDeviceId = BuildConfig.TRACCAR_DEVICE_ID
+
+    val warningGatewayHost = BuildConfig.WARNING_GATEWAY_HOST
+    val warningGatewayApiKey = BuildConfig.WARNING_GATEWAY_API_KEY
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService = this@ForegroundService
@@ -104,6 +106,13 @@ class ForegroundService : Service() {
 
             scope.launch {
                 sendPosition(lat, lon)
+
+                val warning = getWarning(51.190600, 20.399687)
+                if (warning != null) {
+                    Log.d("SYGNALIK-WARNING", warning.type)
+                    _bleText.value = warning.type
+                    bleManager.sendText(warning.type)
+                }
             }
 
             speedCameras.forEach { cam ->
@@ -150,6 +159,42 @@ class ForegroundService : Service() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun getWarning(lat: Double, lon: Double): Warning? {
+        val url = "${warningGatewayHost}/warning?" +
+                "latitude=$lat" +
+                "&longitude=$lon"
+
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("X-API-Key", warningGatewayApiKey)
+            .get()
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    Log.d("SYGNALIK-WARNING", "Response code: ${response.code}")
+
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+
+                        Log.d("SYGNALIK-WARNING", "Body: $body")
+
+                        body?.let {
+                            Gson().fromJson(it, Warning::class.java)
+                        }
+                    } else {
+                        Log.d("SYGNALIK-WARNING", "Not found: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             }
         }
     }
