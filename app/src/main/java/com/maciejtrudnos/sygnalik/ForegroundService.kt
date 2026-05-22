@@ -107,7 +107,7 @@ class ForegroundService : Service() {
             scope.launch {
                 sendPosition(lat, lon)
 
-                val warning = getWarning(51.190600, 20.399687)
+                val warning = getWarning(lat, lon)
                 if (warning != null) {
                     Log.d("SYGNALIK-WARNING", warning.type)
                     _bleText.value = warning.type
@@ -165,8 +165,10 @@ class ForegroundService : Service() {
 
     suspend fun getWarning(lat: Double, lon: Double): Warning? {
         val url = "${warningGatewayHost}/warning?" +
-                "latitude=$lat" +
-                "&longitude=$lon"
+                "latitude=${lat}" +
+                "&longitude=${lon}"
+
+        println("SYGNALIK-URL: ${url}")
 
         val request = Request.Builder()
             .url(url)
