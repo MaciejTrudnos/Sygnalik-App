@@ -1,5 +1,7 @@
 package com.maciejtrudnos.sygnalik
 
+import android.Manifest
+import android.annotation.SuppressLint
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
@@ -16,6 +18,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -60,8 +63,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        @SuppressLint("MissingPermission")
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.d("MainActivity", "onServiceDisconnected called")
+            bleManager?.disconnect()  // ← DODAJ
             service = null
             bleManager = null
             bleText = ""
@@ -96,8 +101,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     override fun onDestroy() {
         super.onDestroy()
+        bleManager?.disconnect()
         unbindService(connection)
     }
 }

@@ -31,13 +31,18 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
 
     private var targetCharacteristic: BluetoothGattCharacteristic? = null
 
+    private var lastConnectedDevice: BluetoothDevice? = null
+    private var reconnectAttempts = 0
+    private val MAX_RECONNECT_ATTEMPTS = 30
+    private var reconnectRunnable: Runnable? = null
+    private var isReconnecting = false
+
     fun setStatus(message: String) {
         onMessage(message)
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun startScan() {
-        // Filter by your service UUID to find only your ESP32
         val filter = ScanFilter.Builder()
             .setServiceUuid(android.os.ParcelUuid(SERVICE_UUID))
             .build()
@@ -58,7 +63,6 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
             result?.device?.let { device ->
-                // Optional: Add device name check
                 val deviceName = device.name
                 Log.i("BLE", "Znaleziono urządzenie: ${device.address}, nazwa: $deviceName")
 
@@ -76,25 +80,44 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
     }
 
     private fun connectToDevice(device: BluetoothDevice) {
+        lastConnectedDevice = device
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        // Change autoConnect to false for faster, more reliable connection
         bluetoothGatt = device.connectGatt(context, false, gattCallback)
+    }
+
+    fun cancelReconnect() {
+        reconnectRunnable?.let { handler.removeCallbacks(it) }
+        reconnectRunnable = null
+        reconnectAttempts = 0
+        isReconnecting = false
+        Log.i("BLE", "Anulowano reconnect")
+        setStatus("Anulowano reconnect")
+    }
+
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun disconnect() {
+        cancelReconnect()
+        bluetoothGatt?.disconnect()
+        bluetoothGatt?.close()
+        bluetoothGatt = null
+        targetCharacteristic = null
+        lastConnectedDevice = null
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i("BLE", "Połączono, rozpoczynam discovery...")
-                // Small delay before service discovery can help on some devices
-                handler.postDelayed({
-                    gatt.discoverServices()
-                }, 600)
+                Log.i("BLE", "Połączono (stan GATT: CONNECTED), rozpoczynam discovery...")
+                setStatus("Połączono - discovery...")
+                handler.postDelayed({ gatt.discoverServices() }, 600)
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i("BLE", "Rozłączono")
+                targetCharacteristic = null
                 setStatus("Rozłączono")
+                reconnect()
             }
         }
 
@@ -117,6 +140,12 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
                 } else {
                     val message = "Połączono"
                     Log.i("BLE", message)
+
+                    isReconnecting = false
+                    reconnectAttempts = 0
+                    reconnectRunnable?.let { handler.removeCallbacks(it) }
+                    reconnectRunnable = null
+
                     setStatus(message)
                 }
             } else {
@@ -124,6 +153,57 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
                 setStatus("Błąd discovery: $status")
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun reconnect() {
+        val device = lastConnectedDevice
+        if (device == null) {
+            Log.e("BLE", "Brak zapamiętanego urządzenia do reconnect")
+            setStatus("Brak urządzenia do reconnect")
+            return
+        }
+
+        if (!isReconnecting) {
+            isReconnecting = true
+            reconnectAttempts = 0
+        }
+
+        attemptReconnect(device)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun attemptReconnect(device: BluetoothDevice) {
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            Log.e("BLE", "Przekroczono maksymalną liczbę prób reconnect dla ${device.address}")
+            setStatus("Reconnect nie powiódł się po $MAX_RECONNECT_ATTEMPTS próbach")
+            isReconnecting = false
+            reconnectRunnable?.let { handler.removeCallbacks(it) }
+            reconnectRunnable = null
+            return
+        }
+
+        reconnectRunnable?.let { handler.removeCallbacks(it) }
+        reconnectRunnable = null
+
+        reconnectAttempts++
+        Log.i("BLE", "Próba reconnect #$reconnectAttempts/$MAX_RECONNECT_ATTEMPTS dla ${device.address}")
+        setStatus("Reconnect ($reconnectAttempts/$MAX_RECONNECT_ATTEMPTS)…")
+
+        val delayMs = (1000 * Math.pow(2.0, (reconnectAttempts - 1).toDouble())).toLong().coerceAtMost(30000L)
+
+        try {
+            bluetoothGatt?.close()
+        } catch (e: Exception) {
+            Log.w("BLE", "Błąd przy zamykaniu bluetoothGatt: ${e.message}")
+        }
+        bluetoothGatt = null
+        targetCharacteristic = null
+
+        reconnectRunnable = Runnable {
+            connectToDevice(device)
+        }
+        handler.postDelayed(reconnectRunnable!!, delayMs)
     }
 
     @SuppressLint("MissingPermission")
