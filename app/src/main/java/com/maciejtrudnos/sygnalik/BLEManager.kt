@@ -99,11 +99,19 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnect() {
         cancelReconnect()
+        stopScanning()
         bluetoothGatt?.disconnect()
         bluetoothGatt?.close()
         bluetoothGatt = null
         targetCharacteristic = null
         lastConnectedDevice = null
+    }
+
+    private fun stopScanning() {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+        bluetoothLeScanner?.stopScan(scanCallback)
     }
 
     private val gattCallback = object : BluetoothGattCallback() {

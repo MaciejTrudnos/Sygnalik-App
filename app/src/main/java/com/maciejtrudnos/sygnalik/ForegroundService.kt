@@ -251,6 +251,24 @@ class ForegroundService : Service() {
         _navText.value = ""
     }
 
+    fun shutdown() {
+        stopNavigation()
+
+        if (::locationProvider.isInitialized && ::locationCallback.isInitialized) {
+            locationProvider.stopContinuousLocationUpdates(locationCallback)
+        }
+
+        if (::bleManager.isInitialized) {
+            bleManager.disconnect()
+        }
+
+        SmsReceiver.bleManager = null
+        CallReceiver.bleManager = null
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
     private suspend fun getCurrentLocationSuspend(): Pair<Double, Double>? =
         suspendCoroutine { cont ->
             locationProvider.getCurrentLocation { lat, lon ->

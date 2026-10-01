@@ -9,7 +9,7 @@ import android.util.Log
 class CallReceiver : BroadcastReceiver() {
 
     companion object {
-        lateinit var bleManager: BLEManager
+        var bleManager: BLEManager? = null
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -18,7 +18,7 @@ class CallReceiver : BroadcastReceiver() {
 
             if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
                 Log.i("CALL", "Polaczenie przychodzace")
-                bleManager.sendText("call")
+                bleManager?.sendText("call")
             }
         }
     }

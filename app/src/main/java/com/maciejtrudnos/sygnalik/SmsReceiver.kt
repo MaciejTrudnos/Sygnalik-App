@@ -10,7 +10,7 @@ import android.util.Log
 class SmsReceiver : BroadcastReceiver() {
 
     companion object {
-        lateinit var bleManager: BLEManager
+        var bleManager: BLEManager? = null
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -25,7 +25,7 @@ class SmsReceiver : BroadcastReceiver() {
                         val sender = sms.displayOriginatingAddress
 
                         Log.i("SMS", "Wiadomosc od $sender")
-                        bleManager.sendText("sms")
+                        bleManager?.sendText("sms")
                     }
                 }
             } catch (e: Exception) {

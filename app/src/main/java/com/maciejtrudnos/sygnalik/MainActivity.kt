@@ -113,6 +113,10 @@ class MainActivity : ComponentActivity() {
                             },
                             onStopNavigation = {
                                 service?.stopNavigation()
+                            },
+                            onExitApp = {
+                                service?.shutdown()
+                                finishAndRemoveTask()
                             }
                         )
                     }
@@ -134,7 +138,8 @@ fun SelectableList(
     bleText: String,
     navText: String,
     onStartNavigation: (Double, Double) -> Unit,
-    onStopNavigation: () -> Unit
+    onStopNavigation: () -> Unit,
+    onExitApp: () -> Unit
 ) {
     val searchClient = remember { OkHttpClient() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -281,6 +286,17 @@ fun SelectableList(
                 Text(stringResource(R.string.nav_stop))
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = onExitApp,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Text(stringResource(R.string.app_exit))
+        }
     }
 }
 
@@ -292,7 +308,8 @@ fun SelectableListPreview() {
             bleText = "Połączono",
             navText = "Skręć w prawo\nZa 300 m\nDo celu: 4.2 km",
             onStartNavigation = { _, _ -> },
-            onStopNavigation = { }
+            onStopNavigation = { },
+            onExitApp = { }
         )
     }
 }
