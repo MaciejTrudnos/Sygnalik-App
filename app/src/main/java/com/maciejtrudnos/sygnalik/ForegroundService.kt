@@ -18,14 +18,19 @@ import com.google.android.gms.location.LocationCallback
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.maciejtrudnos.sygnalik.model.Warning
+import com.maciejtrudnos.sygnalik.model.GraphHopperPath
+import com.maciejtrudnos.sygnalik.model.GraphHopperResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class ForegroundService : Service() {
     lateinit var bleManager: BLEManager
@@ -48,11 +53,20 @@ class ForegroundService : Service() {
     private val _bleText = MutableStateFlow("")
     val bleText: StateFlow<String> get() = _bleText
 
+    private val navigationManager = NavigationManager()
+
+    private val _navText = MutableStateFlow("")
+    val navText: StateFlow<String> get() = _navText
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     val traccarHost = BuildConfig.TRACCAR_HOST
     val traccarDeviceId = BuildConfig.TRACCAR_DEVICE_ID
 
     val warningGatewayHost = BuildConfig.WARNING_GATEWAY_HOST
     val warningGatewayApiKey = BuildConfig.WARNING_GATEWAY_API_KEY
+
+    val graphHopperHost = BuildConfig.GRAPHHOPPER_HOST
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService = this@ForegroundService
@@ -69,8 +83,6 @@ class ForegroundService : Service() {
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
         }
-
-        val scope = CoroutineScope(Dispatchers.IO)
 
         val notification = NotificationCompat.Builder(this, "sygnalik_channel")
             .setContentTitle("Sygnalik Running")
@@ -120,6 +132,13 @@ class ForegroundService : Service() {
 
                 if (distance <= 200) {
                     bleManager.sendText("speedcamera")
+                }
+            }
+
+            if (navigationManager.isActive) {
+                val step = navigationManager.onLocationUpdate(lat, lon)
+                if (step != null) {
+                    _navText.value = formatNavigationStep(step)
                 }
             }
         }
@@ -200,6 +219,104 @@ class ForegroundService : Service() {
             }
         }
     }
+
+    fun startNavigation(destLat: Double, destLon: Double) {
+        navigationManager.clear()
+        _navText.value = ""
+
+        scope.launch {
+            val origin = getCurrentLocationSuspend()
+            if (origin == null) {
+                _navText.value = getString(R.string.nav_no_location)
+                return@launch
+            }
+
+            val path = fetchRoute(origin.first, origin.second, destLat, destLon)
+            if (path == null) {
+                _navText.value = getString(R.string.nav_route_error)
+                return@launch
+            }
+
+            navigationManager.setRoute(path)
+            if (!navigationManager.isActive) {
+                _navText.value = getString(R.string.nav_route_error)
+            } else {
+                _navText.value = getString(R.string.nav_route_planned, formatDistance(path.distance))
+            }
+        }
+    }
+
+    fun stopNavigation() {
+        navigationManager.clear()
+        _navText.value = ""
+    }
+
+    private suspend fun getCurrentLocationSuspend(): Pair<Double, Double>? =
+        suspendCoroutine { cont ->
+            locationProvider.getCurrentLocation { lat, lon ->
+                if (lat != null && lon != null) {
+                    cont.resume(lat to lon)
+                } else {
+                    cont.resume(null)
+                }
+            }
+        }
+
+    private suspend fun fetchRoute(
+        originLat: Double,
+        originLon: Double,
+        destLat: Double,
+        destLon: Double
+    ): GraphHopperPath? {
+        val payload = mapOf(
+            "points" to listOf(listOf(originLon, originLat), listOf(destLon, destLat)),
+            "profile" to "car",
+            "locale" to "pl",
+            "points_encoded" to false,
+            "instructions" to true
+        )
+        val jsonBody = Gson().toJson(payload)
+
+        val request = Request.Builder()
+            .url("${graphHopperHost.trimEnd('/')}/route")
+            .post(okhttp3.RequestBody.create(
+                "application/json; charset=utf-8".toMediaType(),
+                jsonBody
+            ))
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    Log.d("SYGNALIK-NAVIGATION", "Response code: ${response.code}")
+
+                    if (!response.isSuccessful) {
+                        null
+                    } else {
+                        val body = response.body?.string()
+                        body?.let {
+                            Gson().fromJson(it, GraphHopperResponse::class.java)?.paths?.firstOrNull()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    private fun formatNavigationStep(step: NavigationStep): String =
+        if (step.arrived) {
+            getString(R.string.nav_arrived)
+        } else {
+            getString(
+                R.string.nav_instruction_summary,
+                step.instructionText,
+                formatDistance(step.distanceToManeuverMeters),
+                formatDistance(step.remainingDistanceMeters)
+            )
+        }
 
     override fun onBind(intent: Intent?): IBinder = binder
 }

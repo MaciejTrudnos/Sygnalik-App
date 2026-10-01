@@ -52,7 +52,7 @@ Bluetooth, SMS, and call-state features **cannot be verified on an emulator**. I
 
 ## Configuration and secrets
 
-Runtime configuration comes from **system environment variables**, not from committed files:
+Runtime configuration comes from a **`.env` file** in the project root (copy `.env.example`; the file is gitignored), falling back to **system environment variables**, not from committed files:
 
 | Key | Purpose |
 | --- | --- |
@@ -61,6 +61,7 @@ Runtime configuration comes from **system environment variables**, not from comm
 | `TRACCAR_HOST` | Traccar instance address |
 | `WARNING_GATEWAY_HOST` | Sygnalik Warning Gateway address |
 | `WARNING_GATEWAY_API_KEY` | API key for the Warning Gateway |
+| `GRAPHHOPPER_HOST` | GraphHopper routing server address (hardcoded default in `build.gradle.kts`, env var overrides) |
 
 Rules:
 

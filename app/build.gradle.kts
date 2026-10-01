@@ -1,3 +1,39 @@
+import java.io.File
+
+private fun loadDotEnv(directory: File): Map<String, String> {
+    val envFile = File(directory, ".env")
+    if (!envFile.isFile) {
+        return emptyMap()
+    }
+    return envFile.readLines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .mapNotNull { line ->
+            val entry = line.removePrefix("export ").trim()
+            val separatorIndex = entry.indexOf('=')
+            if (separatorIndex <= 0) {
+                null
+            } else {
+                val key = entry.substring(0, separatorIndex).trim()
+                var value = entry.substring(separatorIndex + 1).trim()
+                if (value.length >= 2) {
+                    val first = value.first()
+                    val last = value.last()
+                    if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                        value = value.substring(1, value.length - 1)
+                    }
+                }
+                key to value
+            }
+        }
+        .toMap()
+}
+
+val dotEnvValues: Map<String, String> = loadDotEnv(rootDir)
+
+fun configValue(key: String, default: String = ""): String =
+    dotEnvValues[key] ?: System.getenv(key) ?: default
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,31 +56,37 @@ android {
         buildConfigField(
             "String",
             "NOMINATIM_USER_AGENT",
-            "\"${System.getenv("NOMINATIM_USER_AGENT") ?: ""}\""
+            "\"${configValue("NOMINATIM_USER_AGENT")}\""
         )
 
         buildConfigField(
             "String",
             "TRACCAR_HOST",
-            "\"${System.getenv("TRACCAR_HOST") ?: ""}\""
+            "\"${configValue("TRACCAR_HOST")}\""
         )
 
         buildConfigField(
             "String",
             "TRACCAR_DEVICE_ID",
-            "\"${System.getenv("TRACCAR_DEVICE_ID") ?: ""}\""
+            "\"${configValue("TRACCAR_DEVICE_ID")}\""
         )
 
         buildConfigField(
             "String",
             "WARNING_GATEWAY_HOST",
-            "\"${System.getenv("WARNING_GATEWAY_HOST") ?: ""}\""
+            "\"${configValue("WARNING_GATEWAY_HOST")}\""
         )
 
         buildConfigField(
             "String",
             "WARNING_GATEWAY_API_KEY",
-            "\"${System.getenv("WARNING_GATEWAY_API_KEY") ?: ""}\""
+            "\"${configValue("WARNING_GATEWAY_API_KEY")}\""
+        )
+
+        buildConfigField(
+            "String",
+            "GRAPHHOPPER_HOST",
+            "\"${configValue("GRAPHHOPPER_HOST", "http://129.159.245.14:8989")}\""
         )
     }
 

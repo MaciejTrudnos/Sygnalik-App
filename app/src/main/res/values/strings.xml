@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Sygnalik</string>
+    <string name="nav_route_planned">Trasa wyznaczona: %1$s</string>
+    <string name="nav_route_error">Błąd wyznaczania trasy</string>
+    <string name="nav_no_location">Brak lokalizacji – nie można wyznaczyć trasy</string>
+    <string name="nav_arrived">Dotarłeś do celu</string>
+    <string name="nav_instruction_summary">%1$s\nZa %2$s\nDo celu: %3$s</string>
+    <string name="nav_stop">Stop</string>
 </resources>
