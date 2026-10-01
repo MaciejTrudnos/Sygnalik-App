@@ -54,6 +54,7 @@ class ForegroundService : Service() {
     val bleText: StateFlow<String> get() = _bleText
 
     private val navigationManager = NavigationManager()
+    private var lastNavDeviceMessage: String? = null
 
     private val _navText = MutableStateFlow("")
     val navText: StateFlow<String> get() = _navText
@@ -138,7 +139,14 @@ class ForegroundService : Service() {
             if (navigationManager.isActive) {
                 val step = navigationManager.onLocationUpdate(lat, lon)
                 if (step != null) {
-                    _navText.value = formatNavigationStep(step)
+                    val appText = formatNavigationStep(step)
+                    _navText.value = appText
+
+                    val deviceMessage = "nav:" + toAsciiText(appText)
+                    if (deviceMessage != lastNavDeviceMessage) {
+                        lastNavDeviceMessage = deviceMessage
+                        bleManager.sendText(deviceMessage)
+                    }
                 }
             }
         }
@@ -223,6 +231,7 @@ class ForegroundService : Service() {
     fun startNavigation(destLat: Double, destLon: Double) {
         navigationManager.clear()
         _navText.value = ""
+        lastNavDeviceMessage = null
 
         scope.launch {
             val origin = getCurrentLocationSuspend()
@@ -241,7 +250,19 @@ class ForegroundService : Service() {
             if (!navigationManager.isActive) {
                 _navText.value = getString(R.string.nav_route_error)
             } else {
-                _navText.value = getString(R.string.nav_route_planned, formatDistance(path.distance))
+                val firstStep = navigationManager.onLocationUpdate(origin.first, origin.second)
+                if (firstStep != null) {
+                    val appText = formatNavigationStep(firstStep)
+                    _navText.value = appText
+
+                    val deviceMessage = "nav:" + toAsciiText(appText)
+                    if (deviceMessage != lastNavDeviceMessage) {
+                        lastNavDeviceMessage = deviceMessage
+                        bleManager.sendText(deviceMessage)
+                    }
+                } else {
+                    _navText.value = getString(R.string.nav_route_planned, formatDistance(path.distance))
+                }
             }
         }
     }
@@ -249,6 +270,7 @@ class ForegroundService : Service() {
     fun stopNavigation() {
         navigationManager.clear()
         _navText.value = ""
+        lastNavDeviceMessage = null
     }
 
     fun shutdown() {

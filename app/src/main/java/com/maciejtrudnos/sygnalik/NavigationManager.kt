@@ -126,3 +126,30 @@ fun formatDistance(meters: Double): String =
     } else {
         "%.1f".format(java.util.Locale.US, meters / 1000.0) + " km"
     }
+
+fun toAsciiText(text: String): String {
+    val transliterated = text.map { char ->
+        when (char) {
+            'ą' -> 'a'
+            'ć' -> 'c'
+            'ę' -> 'e'
+            'ł' -> 'l'
+            'ń' -> 'n'
+            'ó' -> 'o'
+            'ś' -> 's'
+            'ź' -> 'z'
+            'ż' -> 'z'
+            'Ą' -> 'A'
+            'Ć' -> 'C'
+            'Ę' -> 'E'
+            'Ł' -> 'L'
+            'Ń' -> 'N'
+            'Ó' -> 'O'
+            'Ś' -> 'S'
+            'Ź' -> 'Z'
+            'Ż' -> 'Z'
+            else -> char
+        }
+    }
+    return String(transliterated.filter { it.code in 32..126 || it == '\n' }.toCharArray())
+}

@@ -23,7 +23,7 @@ class NavigationManagerTest {
             )
         ),
         instructions = listOf(
-            GraphHopperInstruction(distance = 111.0, sign = 2, interval = listOf(0, 1), text = "Prosto", time = 10),
+            GraphHopperInstruction(distance = 111.0, sign = 0, interval = listOf(0, 1), text = "Prosto", time = 10),
             GraphHopperInstruction(distance = 111.0, sign = 2, interval = listOf(1, 2), text = "Skręć w prawo", time = 10),
             GraphHopperInstruction(distance = 111.0, sign = 4, interval = listOf(2, 3), text = "Koniec trasy", time = 10)
         )
@@ -107,5 +107,28 @@ class NavigationManagerTest {
     fun formatDistance_formatsMetersAndKilometers() {
         assertEquals("300 m", formatDistance(300.4))
         assertEquals("4.2 km", formatDistance(4212.0))
+    }
+
+    @Test
+    fun toAsciiText_transliteratesPolishLetters() {
+        assertEquals("Zawroc", toAsciiText("Zawróć"))
+        assertEquals("Dotarles do celu", toAsciiText("Dotarłeś do celu"))
+        assertEquals("Ostro w lewo", toAsciiText("Ostro w lewo"))
+        assertEquals("Skrec skrec SKREC", toAsciiText("Skręć skręć SKRĘĆ"))
+        assertEquals("ZOLC zolc", toAsciiText("ŻÓŁĆ żółć"))
+    }
+
+    @Test
+    fun toAsciiText_preservesNewlines() {
+        assertEquals(
+            "Skrec w prawo\nZa 200 m\nDo celu: 1.2 km",
+            toAsciiText("Skręć w prawo\nZa 200 m\nDo celu: 1.2 km")
+        )
+    }
+
+    @Test
+    fun toAsciiText_dropsNonAsciiCharacters() {
+        assertEquals("X", toAsciiText("\u201EX\u201D"))
+        assertEquals("Prosto  W lewo", toAsciiText("Prosto \u2013 W lewo"))
     }
 }

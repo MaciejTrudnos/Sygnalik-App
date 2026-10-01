@@ -29,6 +29,11 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
     private val SERVICE_UUID: UUID = UUID.fromString("4fafc201-1fb5-459e-8fcc-c5c9c331914b")
     private val CHARACTERISTIC_UUID: UUID = UUID.fromString("beb5483e-36e1-4688-b7f5-ea07361b26a8")
 
+    companion object {
+        // Payload bytes available with negotiated MTU 185 (185 - 3 ATT header bytes)
+        private const val MTU_PAYLOAD_BYTES = 182
+    }
+
     private var targetCharacteristic: BluetoothGattCharacteristic? = null
 
     private var lastConnectedDevice: BluetoothDevice? = null
@@ -146,21 +151,35 @@ class BLEManager(private val context: Context, private val bluetoothLeScanner: B
                     Log.e("BLE", message)
                     setStatus(message)
                 } else {
-                    val message = "Połączono"
-                    Log.i("BLE", message)
-
-                    isReconnecting = false
-                    reconnectAttempts = 0
-                    reconnectRunnable?.let { handler.removeCallbacks(it) }
-                    reconnectRunnable = null
-
-                    setStatus(message)
+                    @SuppressLint("MissingPermission")
+                    val mtuRequested = gatt.requestMtu(MTU_PAYLOAD_BYTES + 3)
+                    if (!mtuRequested) {
+                        Log.w("BLE", "requestMtu nie powiódł się - zostaję przy domyślnym MTU")
+                        onConnectionReady()
+                    }
                 }
             } else {
                 Log.e("BLE", "Service discovery failed: $status")
                 setStatus("Błąd discovery: $status")
             }
         }
+
+        override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            Log.i("BLE", "MTU changed: $mtu (status $status)")
+            onConnectionReady()
+        }
+    }
+
+    private fun onConnectionReady() {
+        val message = "Połączono"
+        Log.i("BLE", message)
+
+        isReconnecting = false
+        reconnectAttempts = 0
+        reconnectRunnable?.let { handler.removeCallbacks(it) }
+        reconnectRunnable = null
+
+        setStatus(message)
     }
 
     @SuppressLint("MissingPermission")
