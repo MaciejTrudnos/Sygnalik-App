@@ -11,7 +11,7 @@ It also integrates with [Traccar](https://www.traccar.org) to provide GPS route 
 - [x] **Speed camera alerts** – Stay safe with localized alerts (Poland).
 - [x] **Speed control alerts** – Warnings about nearby police speed controls.
 - [x] **Traccar integration** – Automatic GPS route tracking.
-- [x] **Navigation support** – Simple turn-by-turn cues (instruction, distance to next maneuver, remaining distance) from a self-hosted [GraphHopper](https://github.com/graphhopper/graphhopper) server.
+- [x] **Navigation** – Displays text-based  [turn-by-turn](https://github.com/MaciejTrudnos/Sygnalik-Directions-API) with information on how to proceed along the route. cues.
 
 ## Configuration
 To enable Geocoding (Nominatim), Tracking (Traccar), Warnings (Warning Gateway) and Routing (GraphHopper), copy the example configuration file to `.env` in the project root and fill in your values:
