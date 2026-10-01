@@ -29,7 +29,7 @@ Values are read from the `.env` file in the project root; system environment var
 | `TRACCAR_HOST` | The address of your Traccar instance | `http://demo3.traccar.org:5055` |
 | `WARNING_GATEWAY_HOST` | The address of the Sygnalik Warning Gateway instance | `http://sygnalik-warning-gateway:5223` |
 | `WARNING_GATEWAY_API_KEY` | API key used to authorize requests to the Sygnalik Warning Gateway | `MY_SECRET_KEY_123` |
-| `GRAPHHOPPER_HOST` | The address of your GraphHopper routing server (has a hardcoded default; set this variable to override) | `http://129.159.245.14:8989` |
+| `GRAPHHOPPER_HOST` | The address of your GraphHopper routing server (has a hardcoded default; set this variable to override) | `http://graphhopper.example.com:8989` |
 
 ## Prerequisites
 To function correctly in the background, Sygnalik requires several sensitive permissions. Before the first run, please go to Settings > Apps > Sygnalik and grant them.
