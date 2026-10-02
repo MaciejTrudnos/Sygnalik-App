@@ -306,7 +306,7 @@ fun SelectableListPreview() {
     SygnalikTheme {
         SelectableList(
             bleText = "Połączono",
-            navText = "Skręć w prawo\nZa 300 m\nDo celu: 4.2 km",
+            navText = "-->\nSkręć w prawo\nZa 300 m\nDo celu: 4.2 km",
             onStartNavigation = { _, _ -> },
             onStopNavigation = { },
             onExitApp = { }

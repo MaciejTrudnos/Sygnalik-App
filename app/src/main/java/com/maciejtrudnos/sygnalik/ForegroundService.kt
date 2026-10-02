@@ -350,9 +350,15 @@ class ForegroundService : Service() {
         if (step.arrived) {
             getString(R.string.nav_arrived)
         } else {
+            val arrow = maneuverArrow(step.sign)
+            val instructionLine = if (arrow == null) {
+                step.instructionText
+            } else {
+                "$arrow\n${step.instructionText}"
+            }
             getString(
                 R.string.nav_instruction_summary,
-                step.instructionText,
+                instructionLine,
                 formatDistance(step.distanceToManeuverMeters),
                 formatDistance(step.remainingDistanceMeters)
             )
